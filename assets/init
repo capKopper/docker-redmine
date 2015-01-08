@@ -476,6 +476,19 @@ if [ -d ${DATA_DIR}/themes ]; then
   rsync -avq --chown=redmine:redmine ${DATA_DIR}/themes/ ${INSTALL_DIR}/public/themes/
 fi
 
+# custom email headers
+echo "Configuring 'X-Capkooper-Env' email header..."
+MAILER_FILE=${INSTALL_DIR}/app/models/mailer.rb
+CAPKOPPER_ENV=${CAPKOPPER_ENV:-dev}
+
+if [ $(grep -c "X-Capkopper-Env" ${MAILER_FILE}) == "0" ]; then
+  echo "> adding X-Capkopper entry into '$MAILER_FILE'"
+  sed -ie "s/'X-Redmine-Site' => Setting.app_title,/'X-Redmine-Site' => Setting.app_title,\n            'X-Capkopper-Env' => '<null>',/g" ${MAILER_FILE}
+fi
+
+echo "> setting 'X-Capkopper-Env' to '$CAPKOPPER_ENV'"
+sed -ie "s/'X-Capkopper-Env'.*,/'X-Capkopper-Env' => '"${CAPKOPPER_ENV}"',/g" ${MAILER_FILE}
+
 appStart () {
   # remove stale unicorn pid if it exists.
   rm -rf tmp/pids/unicorn.pid
